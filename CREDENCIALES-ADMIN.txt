@@ -1,0 +1,49 @@
+╔══════════════════════════════════════════════════════════════╗
+║     CREDENCIALES DE ADMINISTRADOR - RIFAS DE LA SUERTE      ║
+╚══════════════════════════════════════════════════════════════╝
+
+🔐 INFORMACIÓN DE ACCESO AL PANEL ADMINISTRATIVO
+
+URL del Panel: http://localhost:5173/#/admin
+                (o tu dominio cuando lo configures)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👤 USUARIO ADMINISTRADOR:
+   Usuario: admin
+   Contraseña: Rifas2024!Admin#Seguro
+
+📧 EMAIL:
+   admin@rifasdelasuerte.com
+
+👨‍💼 NOMBRE:
+   Administrador Principal
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  IMPORTANTE:
+   - Guarda estas credenciales en un lugar seguro
+   - Cambia la contraseña después del primer acceso
+   - No compartas estas credenciales públicamente
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 PRÓXIMOS PASOS:
+
+1. Ejecuta las migraciones de la base de datos:
+   cd backend
+   npm run migrate:deploy
+
+2. Crea el usuario administrador:
+   Ejecuta: CREAR-ADMIN-CLIENTE.bat
+   O manualmente:
+   node backend\scripts\create-admin-user.js admin Rifas2024!Admin#Seguro admin@rifasdelasuerte.com "Administrador Principal"
+
+3. Inicia la aplicación:
+   npm start
+
+4. Accede al panel:
+   http://localhost:5173/#/admin
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

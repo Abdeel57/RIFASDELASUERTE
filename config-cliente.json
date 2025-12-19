@@ -1,0 +1,15 @@
+{
+  "clientName": "RIFAS DE LA SUERTE",
+  "domain": "",
+  "databaseUrl": "postgresql://postgres:xByilLeCmQsaDXhbyzetJcoEMiuVBfUO@shinkansen.proxy.rlwy.net:47107/railway",
+  "admin": {
+    "username": "admin",
+    "password": "Rifas2024!Admin#Seguro",
+    "email": "admin@rifasdelasuerte.com",
+    "name": "Administrador Principal"
+  },
+  "jwtSecret": "a7f3b9c2d8e1f4a6b5c9d2e7f1a4b8c3d6e9f2a5b8c1d4e7f0a3b6c9d2e5f8a1b4",
+  "createdAt": "2024-01-20T00:00:00.000Z",
+  "instructions": "Configuración completada. Ejecuta: node scripts/apply-client-config.js para aplicar"
+}
+
