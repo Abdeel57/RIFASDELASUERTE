@@ -125,8 +125,9 @@ async function bootstrap() {
   console.log(`🚀 Lucky Snap Backend starting...`);
   console.log(`📡 Environment: ${nodeEnv}`);
   console.log(`🌐 Port: ${port}`);
-  console.log(`🔗 API Base: http://localhost:${port}/api`);
+  console.log(`🔗 API Base: /api`);
 
-  await app.listen(port);
+  // Importante para entornos cloud (Railway/Render): escuchar en todas las interfaces
+  await app.listen(port, '0.0.0.0');
 }
 bootstrap();
