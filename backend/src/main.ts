@@ -63,11 +63,18 @@ async function bootstrap() {
     'http://sorteosgama.pro',
     'http://www.sorteosgama.pro',
     
+    // Cliente: Rifas Entre Amigos Tecolutla
+    'https://rifasentreamigostecolutla.com',
+    'https://www.rifasentreamigostecolutla.com',
+    'http://rifasentreamigostecolutla.com',
+    'http://www.rifasentreamigostecolutla.com',
+    
     // Cliente: Lucky Snap (legacy)
     'https://luckysnaphn.com',
     'https://www.luckysnaphn.com',
     'https://luckysnap.netlify.app',
     'https://neodemo.netlify.app',
+    'https://rifasdelasuerte.netlify.app',
   ];
 
   app.enableCors({
