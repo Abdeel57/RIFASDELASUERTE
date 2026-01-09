@@ -729,8 +729,12 @@ const AdminSettingsPage = () => {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setListingMode('paginado');
-                                            setValue('displayPreferences.listingMode', 'paginado', { shouldDirty: true });
+                                            const newMode: 'paginado' | 'scroll' = 'paginado';
+                                            setListingMode(newMode);
+                                            setValue('displayPreferences', {
+                                                listingMode: newMode,
+                                                paidTicketsVisibility: paidTicketsVisibility
+                                            }, { shouldDirty: true, shouldValidate: true });
                                         }}
                                         className={`px-4 py-2 text-sm font-medium transition-colors ${listingMode === 'paginado' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                                     >
@@ -739,8 +743,12 @@ const AdminSettingsPage = () => {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setListingMode('scroll');
-                                            setValue('displayPreferences.listingMode', 'scroll', { shouldDirty: true });
+                                            const newMode: 'paginado' | 'scroll' = 'scroll';
+                                            setListingMode(newMode);
+                                            setValue('displayPreferences', {
+                                                listingMode: newMode,
+                                                paidTicketsVisibility: paidTicketsVisibility
+                                            }, { shouldDirty: true, shouldValidate: true });
                                         }}
                                         className={`px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300 ${listingMode === 'scroll' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                                     >
@@ -757,8 +765,12 @@ const AdminSettingsPage = () => {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setPaidTicketsVisibility('a_la_vista');
-                                            setValue('displayPreferences.paidTicketsVisibility', 'a_la_vista', { shouldDirty: true });
+                                            const newVisibility: 'a_la_vista' | 'no_disponibles' = 'a_la_vista';
+                                            setPaidTicketsVisibility(newVisibility);
+                                            setValue('displayPreferences', {
+                                                listingMode: listingMode,
+                                                paidTicketsVisibility: newVisibility
+                                            }, { shouldDirty: true, shouldValidate: true });
                                         }}
                                         className={`px-4 py-2 text-sm font-medium transition-colors ${paidTicketsVisibility === 'a_la_vista' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                                     >
@@ -767,8 +779,12 @@ const AdminSettingsPage = () => {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setPaidTicketsVisibility('no_disponibles');
-                                            setValue('displayPreferences.paidTicketsVisibility', 'no_disponibles', { shouldDirty: true });
+                                            const newVisibility: 'a_la_vista' | 'no_disponibles' = 'no_disponibles';
+                                            setPaidTicketsVisibility(newVisibility);
+                                            setValue('displayPreferences', {
+                                                listingMode: listingMode,
+                                                paidTicketsVisibility: newVisibility
+                                            }, { shouldDirty: true, shouldValidate: true });
                                         }}
                                         className={`px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300 ${paidTicketsVisibility === 'no_disponibles' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                                     >
