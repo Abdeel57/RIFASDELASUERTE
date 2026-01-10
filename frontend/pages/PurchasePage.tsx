@@ -101,7 +101,7 @@ const PurchasePage = () => {
         // Usar emojis Unicode directamente para asegurar compatibilidad
         return `Hola! 👋
 
-Acabo de realizar mi pago y quiero enviarte mi comprobante para confirmar mi apartado.
+Quiero apartar los siguientes boletos:
 
 📋 *Mis datos:*
 • Nombre: ${customerName}
@@ -111,9 +111,9 @@ Acabo de realizar mi pago y quiero enviarte mi comprobante para confirmar mi apa
 🎫 *Información del apartado:*
 • Rifa: ${raffleTitle}
 • Boletos: ${ticketsText}
-• Total pagado: $${totalFormatted} MXN
+• Total: $${totalFormatted} MXN
 
-Adjunto el comprobante de pago. Gracias! 🙏`;
+¿Cuál es el proceso para realizar el apartado? Gracias! 🙏`;
     };
 
     /**
@@ -324,7 +324,7 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
             // Crear usuario temporal (en una app real esto sería más complejo)
             const userId = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             
-            const orderData = {
+            const orderData: any = {
                 userId: userId,
                 raffleId: raffle.id,
                 tickets: ticketsToOrder,
@@ -347,7 +347,26 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                 phone: data.phone
             });
             
-            setCreatedOrder(newOrder);
+            // Redirigir directamente a WhatsApp en lugar de mostrar la página de cuentas
+            const whatsappMessage = formatWhatsAppMessage(
+                data.name,
+                data.phone,
+                newOrder.folio || '',
+                raffle.title || '',
+                ticketsToOrder,
+                total
+            );
+            
+            // Codificar el mensaje preservando los emojis correctamente
+            const encodedMessage = encodeWhatsAppMessage(whatsappMessage);
+            // Formatear número de WhatsApp para México (10 dígitos + código 52)
+            const formattedWhatsApp = formatPhoneNumberForMexico(contactWhatsapp);
+            const whatsappUrl = formattedWhatsApp 
+                ? `https://wa.me/${formattedWhatsApp}?text=${encodedMessage}`
+                : `https://wa.me/${contactWhatsapp.replace(/\D/g, '')}?text=${encodedMessage}`;
+            
+            // Redirigir directamente a WhatsApp
+            window.location.href = whatsappUrl;
         } catch (err) {
             console.error('❌ Error creating order:', err);
             const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
@@ -866,7 +885,7 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                                                 </svg>
-                                                Generar Folio - ${total.toFixed(2)} MXN
+                                                Apartar
                                             </div>
                                         )}
                                     </button>
