@@ -83,8 +83,10 @@ const PurchasePage = () => {
         customerPhone: string,
         folio: string,
         raffleTitle: string,
-        tickets: number[],
-        total: number
+        allTickets: number[],
+        total: number,
+        originalTicketsCount: number = 0,
+        giftTicketsCount: number = 0
     ): string => {
         // Formatear lista de boletos (mostrar máximo 10, luego "y X más")
         const formatTickets = (tickets: number[]): string => {
@@ -95,8 +97,23 @@ const PurchasePage = () => {
             return `${tickets.slice(0, 10).join(', ')} y ${tickets.length - 10} más`;
         };
 
-        const ticketsText = formatTickets(tickets);
+        const allTicketsText = formatTickets(allTickets);
         const totalFormatted = total.toFixed(2);
+        
+        // Separar boletos originales y de regalo si hay regalos
+        let ticketsInfo = '';
+        if (giftTicketsCount > 0 && originalTicketsCount > 0) {
+            // Los boletos originales vienen primero en el array (según el backend)
+            const originalTickets = allTickets.slice(0, originalTicketsCount).sort((a, b) => a - b);
+            const giftTickets = allTickets.slice(originalTicketsCount).sort((a, b) => a - b);
+            const originalTicketsText = formatTickets(originalTickets);
+            const giftTicketsText = formatTickets(giftTickets);
+            ticketsInfo = `• Boletos seleccionados: ${originalTicketsText}\n• Boletos de regalo 🎁: ${giftTicketsText}\n• Total de boletos: ${allTickets.length}`;
+        } else {
+            // Si no hay boletos de regalo, mostrar todos ordenados
+            const sortedTickets = [...allTickets].sort((a, b) => a - b);
+            ticketsInfo = `• Boletos: ${formatTickets(sortedTickets)}`;
+        }
 
         // Usar emojis Unicode directamente para asegurar compatibilidad
         return `Hola! 👋
@@ -110,7 +127,7 @@ Quiero apartar los siguientes boletos:
 
 🎫 *Información del apartado:*
 • Rifa: ${raffleTitle}
-• Boletos: ${ticketsText}
+${ticketsInfo}
 • Total: $${totalFormatted} MXN
 
 ¿Cuál es el proceso para realizar el apartado? Gracias! 🙏`;
@@ -347,14 +364,22 @@ Quiero apartar los siguientes boletos:
                 phone: data.phone
             });
             
+            // Usar todos los tickets de la orden (incluye boletos originales + boletos de regalo adicionales)
+            // El backend asigna los boletos adicionales cuando hay oportunidades, así que usamos newOrder.tickets
+            const allTickets = (newOrder.tickets || ticketsToOrder) as number[];
+            const originalTicketsCount = ticketsToOrder.length;
+            const giftTicketsCount = allTickets.length - originalTicketsCount;
+            
             // Redirigir directamente a WhatsApp en lugar de mostrar la página de cuentas
             const whatsappMessage = formatWhatsAppMessage(
                 data.name,
                 data.phone,
                 newOrder.folio || '',
                 raffle.title || '',
-                ticketsToOrder,
-                total
+                allTickets,
+                total,
+                originalTicketsCount,
+                giftTicketsCount
             );
             
             // Codificar el mensaje preservando los emojis correctamente
