@@ -30,6 +30,7 @@ const RaffleDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [listingMode, setListingMode] = useState<'paginado' | 'scroll'>('paginado');
     const [hideOccupied, setHideOccupied] = useState<boolean>(false);
+    const [showCountdown, setShowCountdown] = useState<boolean>(true);
     const [showSpinResult, setShowSpinResult] = useState(false);
     const [lastRandomQuantity, setLastRandomQuantity] = useState(0);
     const toast = useToast();
@@ -50,6 +51,7 @@ const RaffleDetailPage = () => {
             const prefs = (settings as any)?.displayPreferences;
             if (prefs?.listingMode) setListingMode(prefs.listingMode);
             if (prefs?.paidTicketsVisibility) setHideOccupied(prefs.paidTicketsVisibility === 'no_disponibles');
+            if (prefs?.showCountdown !== undefined) setShowCountdown(prefs.showCountdown);
         }).catch(() => { });
 
         if (slug) {
@@ -272,9 +274,11 @@ const RaffleDetailPage = () => {
                             title={raffle.title}
                             className="w-full max-w-2xl mx-auto mb-6"
                         />
-                        <div className="w-full max-w-2xl mx-auto mb-6 flex justify-center">
-                            <CountdownTimer targetDate={raffle.drawDate} />
-                        </div>
+                        {showCountdown && (
+                            <div className="w-full max-w-2xl mx-auto mb-6 flex justify-center">
+                                <CountdownTimer targetDate={raffle.drawDate} />
+                            </div>
+                        )}
                         <div className="bg-background-secondary p-6 rounded-lg border border-slate-700/50 mb-6">
                             <h1 className="text-3xl font-bold mb-4 text-center">{raffle.title}</h1>
                             {raffle.purchaseDescription ? (

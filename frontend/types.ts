@@ -115,6 +115,7 @@ export interface AppearanceSettings {
 export interface DisplayPreferences {
     listingMode: 'paginado' | 'scroll';
     paidTicketsVisibility: 'a_la_vista' | 'no_disponibles';
+    showCountdown?: boolean; // Mostrar u ocultar el contador regresivo
 }
 
 export interface Settings {

@@ -5,6 +5,7 @@ import { Raffle } from '../types';
 import CountdownTimer from './CountdownTimer';
 // Removed ShoppingBag import - no longer needed
 import ResponsiveImage from './ResponsiveImage';
+import { getSettings } from '../services/api';
 
 interface HeroRaffleProps {
     raffle: Raffle;
@@ -14,6 +15,7 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    const [showCountdown, setShowCountdown] = useState<boolean>(true);
     const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
     // Preparar imágenes: incluir imagen principal + galería (evitando duplicados)
@@ -93,6 +95,18 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
             };
         }
     }, [allImages.length, startAutoChange]);
+
+    // Cargar configuración de mostrar contador
+    useEffect(() => {
+        getSettings().then(settings => {
+            const prefs = (settings as any)?.displayPreferences;
+            if (prefs?.showCountdown !== undefined) {
+                setShowCountdown(prefs.showCountdown);
+            }
+        }).catch(() => {
+            // En caso de error, mantener el valor por defecto (true)
+        });
+    }, []);
 
     // Detectar móvil para desactivar animaciones
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -275,10 +289,14 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
                         </Link>
 
                         {/* Contador de tiempo */}
-                        <div className="mb-3 sm:mb-4">
-                            <p className="text-white/80 text-sm sm:text-base md:text-lg font-medium">El sorteo termina en:</p>
-                        </div>
-                        <CountdownTimer targetDate={raffle.drawDate} />
+                        {showCountdown && (
+                            <>
+                                <div className="mb-3 sm:mb-4">
+                                    <p className="text-white/80 text-sm sm:text-base md:text-lg font-medium">El sorteo termina en:</p>
+                                </div>
+                                <CountdownTimer targetDate={raffle.drawDate} />
+                            </>
+                        )}
                     </div>
                 </motion.div>
             </div>

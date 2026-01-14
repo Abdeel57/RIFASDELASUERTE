@@ -208,6 +208,7 @@ const AdminSettingsPage = () => {
     const { updateAppearance } = useTheme();
     const [listingMode, setListingMode] = useState<'paginado' | 'scroll'>('paginado');
     const [paidTicketsVisibility, setPaidTicketsVisibility] = useState<'a_la_vista' | 'no_disponibles'>('a_la_vista');
+    const [showCountdown, setShowCountdown] = useState<boolean>(true);
     const [previewColors, setPreviewColors] = useState({
         primary: '#0ea5e9',
         accent: '#ec4899',
@@ -247,20 +248,25 @@ const AdminSettingsPage = () => {
             if (displayPrefs) {
                 const listing = displayPrefs.listingMode || 'paginado';
                 const visibility = displayPrefs.paidTicketsVisibility || 'a_la_vista';
+                const countdown = displayPrefs.showCountdown !== undefined ? displayPrefs.showCountdown : true;
                 setListingMode(listing);
                 setPaidTicketsVisibility(visibility);
+                setShowCountdown(countdown);
                 // Actualizar el formulario con los valores correctos
                 setValue('displayPreferences', {
                     listingMode: listing,
-                    paidTicketsVisibility: visibility
+                    paidTicketsVisibility: visibility,
+                    showCountdown: countdown
                 });
             } else {
                 // Valores por defecto si no existen
                 setListingMode('paginado');
                 setPaidTicketsVisibility('a_la_vista');
+                setShowCountdown(true);
                 setValue('displayPreferences', {
                     listingMode: 'paginado',
-                    paidTicketsVisibility: 'a_la_vista'
+                    paidTicketsVisibility: 'a_la_vista',
+                    showCountdown: true
                 });
             }
 
@@ -269,7 +275,8 @@ const AdminSettingsPage = () => {
                 ...data,
                 displayPreferences: displayPrefs || {
                     listingMode: 'paginado',
-                    paidTicketsVisibility: 'a_la_vista'
+                    paidTicketsVisibility: 'a_la_vista',
+                    showCountdown: true
                 }
             });
             setLoading(false);
@@ -326,6 +333,7 @@ const AdminSettingsPage = () => {
             const formDisplayPrefs = data.displayPreferences || {
                 listingMode,
                 paidTicketsVisibility,
+                showCountdown: showCountdown !== undefined ? showCountdown : true,
             };
             
             // Validate data before sending
@@ -383,8 +391,10 @@ const AdminSettingsPage = () => {
             if (resultDisplayPrefs) {
                 const listing = resultDisplayPrefs.listingMode || 'paginado';
                 const visibility = resultDisplayPrefs.paidTicketsVisibility || 'a_la_vista';
+                const countdown = resultDisplayPrefs.showCountdown !== undefined ? resultDisplayPrefs.showCountdown : true;
                 setListingMode(listing);
                 setPaidTicketsVisibility(visibility);
+                setShowCountdown(countdown);
             }
             
             // Reset del formulario con datos parseados
@@ -792,6 +802,40 @@ const AdminSettingsPage = () => {
                                     </button>
                                 </div>
                                 <p className="text-xs text-gray-500 mt-2">Elige si se muestran o se deshabilitan los boletos ya pagados.</p>
+                            </div>
+                        </div>
+                        
+                        {/* Mostrar contador regresivo */}
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                            <label className={labelClasses}>Contador regresivo</label>
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-gray-700">Mostrar contador de cuenta regresiva</p>
+                                    <p className="text-xs text-gray-500 mt-1">Activa o desactiva la visualización del contador regresivo en las páginas de rifas.</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const newValue = !showCountdown;
+                                        setShowCountdown(newValue);
+                                        const currentPrefs = watch('displayPreferences') || { listingMode, paidTicketsVisibility, showCountdown: true };
+                                        setValue('displayPreferences', {
+                                            ...currentPrefs,
+                                            showCountdown: newValue
+                                        }, { shouldDirty: true, shouldValidate: true });
+                                    }}
+                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                        showCountdown ? 'bg-blue-500' : 'bg-gray-300'
+                                    }`}
+                                    role="switch"
+                                    aria-checked={showCountdown}
+                                >
+                                    <span
+                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                            showCountdown ? 'translate-x-5' : 'translate-x-0'
+                                        }`}
+                                    />
+                                </button>
                             </div>
                         </div>
                     </OptimizedSectionWrapper>
