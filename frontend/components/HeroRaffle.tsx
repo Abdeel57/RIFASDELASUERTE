@@ -250,13 +250,13 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
             </div>
 
             {/* Contenido centrado sobre la imagen */}
-            <div className="container mx-auto px-4 relative z-10 min-h-screen flex flex-col justify-between py-4 sm:py-8">
+            <div className="container mx-auto px-4 relative z-10 min-h-screen flex flex-col justify-center py-4 sm:py-8">
                 {/* Título y descripción en la parte superior */}
                 <motion.div
                     initial={isMobile ? { opacity: 0 } : { opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={isMobile ? { duration: 0.4 } : { duration: 0.8 }}
-                    className="flex flex-col items-center text-center space-y-2 sm:space-y-3 md:space-y-4 pt-8 sm:pt-12 md:pt-16 lg:pt-20"
+                    className="flex flex-col items-center text-center space-y-2 sm:space-y-3 md:space-y-4 pt-8 sm:pt-12 md:pt-16 lg:pt-20 mb-6 sm:mb-8 md:mb-10"
                 >
                     {/* Título - Mejorado para móvil */}
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-white leading-tight sm:leading-none max-w-[95%] sm:max-w-4xl px-2 sm:px-0 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
@@ -271,12 +271,12 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
                     )}
                 </motion.div>
 
-                {/* Sección de compra y contador - En la parte inferior como pie de página - Mejorada para móvil */}
+                {/* Sección de compra y contador - Posicionada más arriba para mejor visibilidad - Mejorada para móvil */}
                 <motion.div
                     initial={isMobile ? { opacity: 0 } : { opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={isMobile ? { duration: 0.4, delay: 0.1 } : { duration: 0.8, delay: 0.2 }}
-                    className="flex flex-col items-center pb-4 sm:pb-8 md:pb-12 w-full"
+                    className="flex flex-col items-center mt-8 sm:mt-12 md:mt-16 pb-6 sm:pb-8 md:pb-12 w-full"
                 >
                     <div className="w-full max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[80%] bg-white/15 backdrop-blur-md rounded-2xl sm:rounded-3xl px-4 sm:px-5 md:px-6 lg:px-7 py-4 sm:py-4 md:py-5 border border-white/30 shadow-2xl"
                     >
