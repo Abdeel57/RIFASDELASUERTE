@@ -200,8 +200,8 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
                     </AnimatePresence>
                 )}
                 
-                {/* Overlay oscuro para legibilidad */}
-                <div className="absolute inset-0 bg-black/35"></div>
+                {/* Overlay oscuro para legibilidad - Más oscuro en móvil para mejor contraste */}
+                <div className="absolute inset-0 bg-black/40 sm:bg-black/35"></div>
                 
                 {/* Patrón de textura deshabilitado (se removió la marca de agua) */}
                 
@@ -250,51 +250,53 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
             </div>
 
             {/* Contenido centrado sobre la imagen */}
-            <div className="container mx-auto px-4 relative z-10 min-h-screen flex flex-col justify-between py-8">
+            <div className="container mx-auto px-4 relative z-10 min-h-screen flex flex-col justify-between py-4 sm:py-8">
                 {/* Título y descripción en la parte superior */}
                 <motion.div
                     initial={isMobile ? { opacity: 0 } : { opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={isMobile ? { duration: 0.4 } : { duration: 0.8 }}
-                    className="flex flex-col items-center text-center space-y-3 sm:space-y-4 pt-12 sm:pt-16 md:pt-20"
+                    className="flex flex-col items-center text-center space-y-2 sm:space-y-3 md:space-y-4 pt-8 sm:pt-12 md:pt-16 lg:pt-20"
                 >
-                    {/* Título */}
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-none max-w-4xl">
+                    {/* Título - Mejorado para móvil */}
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-white leading-tight sm:leading-none max-w-[95%] sm:max-w-4xl px-2 sm:px-0 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
                         {raffle.title}
                     </h1>
 
-                    {/* Descripción (solo si existe) */}
+                    {/* Descripción (solo si existe) - Mejorada para móvil */}
                     {raffle.description && (
-                        <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white font-black tracking-wide max-w-2xl leading-tight">
+                        <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white font-bold sm:font-black tracking-wide max-w-[95%] sm:max-w-2xl leading-relaxed sm:leading-tight px-2 sm:px-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
                             {raffle.description}
                         </p>
                     )}
                 </motion.div>
 
-                {/* Sección de compra y contador - En la parte inferior como pie de página */}
+                {/* Sección de compra y contador - En la parte inferior como pie de página - Mejorada para móvil */}
                 <motion.div
                     initial={isMobile ? { opacity: 0 } : { opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={isMobile ? { duration: 0.4, delay: 0.1 } : { duration: 0.8, delay: 0.2 }}
-                    className="flex flex-col items-center pb-8 sm:pb-12"
+                    className="flex flex-col items-center pb-4 sm:pb-8 md:pb-12 w-full"
                 >
-                    <div className="w-full max-w-[90%] sm:max-w-[85%] md:max-w-[80%] bg-white/10 backdrop-blur-lg rounded-3xl px-5 sm:px-6 md:px-7 py-3 sm:py-4 md:py-4 border border-white/20"
+                    <div className="w-full max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[80%] bg-white/15 backdrop-blur-md rounded-2xl sm:rounded-3xl px-4 sm:px-5 md:px-6 lg:px-7 py-4 sm:py-4 md:py-5 border border-white/30 shadow-2xl"
                     >
-                        {/* Botón principal - Comprar Boletos - Más grande y legible */}
+                        {/* Botón principal - Comprar Boletos - Optimizado para móvil */}
                         <Link
                             to={`/sorteo/${raffle.slug}`}
-                            className="inline-flex items-center justify-center gap-0 bg-accent hover:bg-accent/90 text-white font-bold text-base sm:text-lg md:text-xl px-8 sm:px-10 md:px-12 py-2.5 sm:py-3 md:py-3.5 rounded-2xl shadow-2xl hover:shadow-accent/50 hover:scale-105 transition-all duration-300 w-full mb-3 sm:mb-4"
+                            className="inline-flex items-center justify-center gap-0 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-black text-sm sm:text-base md:text-lg lg:text-xl px-6 sm:px-8 md:px-10 lg:px-12 py-3 sm:py-3 md:py-3.5 rounded-xl sm:rounded-2xl shadow-2xl hover:shadow-green-500/50 active:scale-95 transition-all duration-300 w-full mb-3 sm:mb-4"
                         >
-                            <span>COMPRAR BOLETOS</span>
+                            <span className="uppercase tracking-wide">COMPRAR BOLETOS</span>
                         </Link>
 
-                        {/* Contador de tiempo */}
+                        {/* Contador de tiempo - Mejorado para móvil */}
                         {showCountdown && (
                             <>
-                                <div className="mb-3 sm:mb-4">
-                                    <p className="text-white/80 text-sm sm:text-base md:text-lg font-medium">El sorteo termina en:</p>
+                                <div className="mb-2 sm:mb-3 md:mb-4 text-center">
+                                    <p className="text-white/90 text-xs sm:text-sm md:text-base font-semibold sm:font-medium drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">El sorteo termina en:</p>
                                 </div>
-                                <CountdownTimer targetDate={raffle.drawDate} />
+                                <div className="flex justify-center">
+                                    <CountdownTimer targetDate={raffle.drawDate} />
+                                </div>
                             </>
                         )}
                     </div>

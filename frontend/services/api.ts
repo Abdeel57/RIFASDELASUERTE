@@ -31,6 +31,13 @@ const getAuthToken = (): string | null => {
     if (tokenData) {
         try {
             const parsed = JSON.parse(tokenData);
+            // Verificar si el token expiró
+            if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+                console.warn('⚠️ Token expirado, limpiando...');
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin_user');
+                return null;
+            }
             return parsed.access_token || tokenData; // Soporta tanto objeto como string
         } catch {
             return tokenData; // Si no es JSON, devolver como string
@@ -1360,11 +1367,26 @@ export const adminDeleteUser = async (id: string): Promise<void> => {
 };
 
 export const adminUpdateSettings = async (settings: Settings): Promise<Settings> => {
+    const token = getAuthToken();
+    if (!token) {
+        throw new Error('No estás autenticado. Por favor, inicia sesión nuevamente.');
+    }
+    
     const response = await fetch(`${API_URL}/admin/settings`, {
         method: 'POST', // Using POST for upsert
         headers: getAuthHeaders(),
         body: JSON.stringify(settings),
     });
+    
+    // Si recibimos un 401, limpiar el token y redirigir al login
+    if (response.status === 401) {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+        // Recargar la página para que el AuthContext redirija al login
+        window.location.href = '/#/admin/login';
+        throw new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+    }
+    
     return handleResponse(response);
 }
 

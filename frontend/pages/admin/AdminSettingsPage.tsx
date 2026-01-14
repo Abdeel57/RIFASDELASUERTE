@@ -412,7 +412,15 @@ const AdminSettingsPage = () => {
             alert(`✅ Configuración guardada con éxito!\n\nCambios aplicados:\n- Apariencia: ${result.appearance?.siteName || 'N/A'}\n- Contacto: ${result.contactInfo?.whatsapp ? 'WhatsApp configurado' : 'Sin WhatsApp'}\n- Redes: ${Object.values(result.socialLinks || {}).filter(Boolean).length} redes configuradas`);
         } catch (error) {
             console.error('❌ Error saving settings:', error);
-            alert('❌ Error al guardar la configuración. Revisa la consola para más detalles.');
+            const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+            
+            // Si el error indica que la sesión expiró, el código ya redirigió al login
+            if (errorMessage.includes('sesión') || errorMessage.includes('autenticado') || errorMessage.includes('401')) {
+                alert('⚠️ Tu sesión ha expirado. Serás redirigido al login.');
+                return; // No mostrar el alert adicional ya que se redirigirá
+            }
+            
+            alert(`❌ Error al guardar la configuración: ${errorMessage}\n\nPor favor, verifica que estés autenticado y que tengas permisos de administrador.`);
         } finally {
             setSaving(false);
         }
