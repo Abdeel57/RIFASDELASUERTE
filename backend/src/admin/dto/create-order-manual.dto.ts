@@ -40,9 +40,9 @@ export class CreateOrderManualDto {
   @Min(0, { message: 'El total no puede ser negativo' })
   total: number;
 
-  @IsEnum(['PENDING', 'PAID', 'COMPLETED'], { message: 'El estado debe ser PENDING, PAID o COMPLETED' })
+  @IsEnum(['PENDING', 'PAID'], { message: 'El estado debe ser PENDING o PAID' })
   @IsOptional()
-  status?: 'PENDING' | 'PAID' | 'COMPLETED';
+  status?: 'PENDING' | 'PAID';
 
   @IsString({ message: 'El método de pago debe ser un texto' })
   @IsOptional()

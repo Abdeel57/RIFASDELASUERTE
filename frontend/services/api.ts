@@ -1306,13 +1306,12 @@ export interface CreateOrderManualData {
     customer: {
         name: string;
         phone: string;
-        email?: string;
         district?: string;
     };
     tickets: number[];
     giftTickets?: number[];
     total: number;
-    status?: 'PENDING' | 'PAID' | 'COMPLETED';
+    status?: 'PENDING' | 'PAID';
     paymentMethod?: string;
     notes?: string;
 }

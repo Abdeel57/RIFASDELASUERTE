@@ -35,11 +35,46 @@ const AdminCustomersPage: React.FC = () => {
     const [occupiedTickets, setOccupiedTickets] = useState<number[]>([]);
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
-    const [customerEmail, setCustomerEmail] = useState('');
-    const [customerDistrict, setCustomerDistrict] = useState('');
+    const [customerState, setCustomerState] = useState('');
     const [manualTicketsInput, setManualTicketsInput] = useState('');
     const [giftTicketsInput, setGiftTicketsInput] = useState('');
-    const [orderStatus, setOrderStatus] = useState<'PENDING' | 'PAID' | 'COMPLETED'>('PENDING');
+    const [orderStatus, setOrderStatus] = useState<'PENDING' | 'PAID'>('PENDING');
+
+    // Estados de México
+    const estadosMexico = [
+        'Aguascalientes',
+        'Baja California',
+        'Baja California Sur',
+        'Campeche',
+        'Chiapas',
+        'Chihuahua',
+        'Ciudad de México',
+        'Coahuila',
+        'Colima',
+        'Durango',
+        'Estado de México',
+        'Guanajuato',
+        'Guerrero',
+        'Hidalgo',
+        'Jalisco',
+        'Michoacán',
+        'Morelos',
+        'Nayarit',
+        'Nuevo León',
+        'Oaxaca',
+        'Puebla',
+        'Querétaro',
+        'Quintana Roo',
+        'San Luis Potosí',
+        'Sinaloa',
+        'Sonora',
+        'Tabasco',
+        'Tamaulipas',
+        'Tlaxcala',
+        'Veracruz',
+        'Yucatán',
+        'Zacatecas'
+    ];
     const [paymentMethod, setPaymentMethod] = useState('');
     const [notes, setNotes] = useState('');
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -335,8 +370,7 @@ const AdminCustomersPage: React.FC = () => {
                 customer: {
                     name: customerName.trim(),
                     phone: customerPhone.trim(),
-                    email: customerEmail.trim() || undefined,
-                    district: customerDistrict.trim() || undefined,
+                    district: customerState.trim() || undefined,
                 },
                 tickets: manualTickets,
                 giftTickets: giftTickets.length > 0 ? giftTickets : undefined,
@@ -347,7 +381,17 @@ const AdminCustomersPage: React.FC = () => {
             });
 
             // Limpiar formulario
-            handleCloseCreateOrderModal();
+            setSelectedRaffleId('');
+            setCustomerName('');
+            setCustomerPhone('');
+            setCustomerState('');
+            setManualTicketsInput('');
+            setGiftTicketsInput('');
+            setOrderStatus('PENDING');
+            setPaymentMethod('');
+            setNotes('');
+            setValidationErrors([]);
+            setIsCreateOrderModalOpen(false);
 
             // Refrescar datos
             await refreshData();
@@ -370,8 +414,7 @@ const AdminCustomersPage: React.FC = () => {
         setSelectedRaffleId('');
         setCustomerName('');
         setCustomerPhone('');
-        setCustomerEmail('');
-        setCustomerDistrict('');
+        setCustomerState('');
         setManualTicketsInput('');
         setGiftTicketsInput('');
         setOrderStatus('PENDING');
@@ -1070,29 +1113,20 @@ const AdminCustomersPage: React.FC = () => {
                                             required
                                         />
                                     </div>
-                                    <div>
+                                    <div className="md:col-span-2">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Email (Opcional)
+                                            Estado (Opcional)
                                         </label>
-                                        <input
-                                            type="email"
-                                            value={customerEmail}
-                                            onChange={(e) => setCustomerEmail(e.target.value)}
+                                        <select
+                                            value={customerState}
+                                            onChange={(e) => setCustomerState(e.target.value)}
                                             className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                                            placeholder="cliente@ejemplo.com"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Distrito (Opcional)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={customerDistrict}
-                                            onChange={(e) => setCustomerDistrict(e.target.value)}
-                                            className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                                            placeholder="Distrito o ciudad"
-                                        />
+                                        >
+                                            <option value="">Selecciona un estado</option>
+                                            {estadosMexico.map(estado => (
+                                                <option key={estado} value={estado}>{estado}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
 
@@ -1153,12 +1187,11 @@ const AdminCustomersPage: React.FC = () => {
                                         </label>
                                         <select
                                             value={orderStatus}
-                                            onChange={(e) => setOrderStatus(e.target.value as 'PENDING' | 'PAID' | 'COMPLETED')}
+                                            onChange={(e) => setOrderStatus(e.target.value as 'PENDING' | 'PAID')}
                                             className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                                         >
-                                            <option value="PENDING">Pendiente</option>
+                                            <option value="PENDING">Apartado</option>
                                             <option value="PAID">Pagado</option>
-                                            <option value="COMPLETED">Completado</option>
                                         </select>
                                     </div>
                                     <div>

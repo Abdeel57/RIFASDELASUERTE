@@ -669,17 +669,19 @@ export class AdminService {
         );
       }
 
-      // 10. Crear o buscar el usuario
+      // 10. Crear o buscar el usuario por teléfono
       let user;
-      if (createOrderDto.customer.email) {
-        user = await this.prisma.user.findUnique({ 
-          where: { email: createOrderDto.customer.email } 
+      if (createOrderDto.customer.phone) {
+        // Buscar por teléfono si existe
+        const users = await this.prisma.user.findMany({
+          where: { phone: createOrderDto.customer.phone },
         });
+        user = users.length > 0 ? users[0] : null;
       }
 
       if (!user) {
-        // Crear nuevo usuario
-        const email = createOrderDto.customer.email || `user-${Date.now()}@temp.com`;
+        // Crear nuevo usuario sin email (generar uno temporal único)
+        const email = `user-${Date.now()}-${Math.random().toString(36).substring(7)}@temp.com`;
         user = await this.prisma.user.create({
           data: {
             email,
