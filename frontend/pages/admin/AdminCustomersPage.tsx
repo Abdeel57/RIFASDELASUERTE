@@ -144,9 +144,36 @@ const AdminCustomersPage: React.FC = () => {
         }
     };
 
-    // Liberar boletos usando releaseOrder
+    // Liberar boletos usando releaseOrder con doble confirmación
     const handleRelease = async (orderId: string) => {
-        if (!window.confirm('¿Estás seguro de liberar estos boletos? Volverán al inventario.')) return;
+        // Buscar la orden para obtener información
+        const order = orders.find(o => o.id === orderId);
+        const orderStatus = order?.status || 'UNKNOWN';
+        const isOrderPaid = isPaid(orderStatus);
+        const customerName = order?.customer?.name || 'Cliente';
+        const ticketsCount = order?.tickets?.length || 0;
+        const folio = order?.folio || 'N/A';
+        
+        // Primera confirmación - Información detallada
+        const firstConfirmMessage = `⚠️ ADVERTENCIA: Estás a punto de LIBERAR boletos de una orden.\n\n` +
+            `📋 Información de la orden:\n` +
+            `• Folio: ${folio}\n` +
+            `• Cliente: ${customerName}\n` +
+            `• Boletos: ${ticketsCount} boleto(s)\n` +
+            `• Estado: ${isOrderPaid ? '✅ PAGADO' : orderStatus}\n\n` +
+            `${isOrderPaid ? '⚠️ IMPORTANTE: Esta orden ya está PAGADA. Al liberar estos boletos, se devolverán al inventario y el cliente perderá su compra.\n\n' : ''}` +
+            `¿Estás seguro de continuar?`;
+        
+        if (!window.confirm(firstConfirmMessage)) return;
+        
+        // Segunda confirmación - Confirmación final
+        const secondConfirmMessage = `🔴 CONFIRMACIÓN FINAL\n\n` +
+            `Vas a liberar ${ticketsCount} boleto(s) de la orden ${folio}.\n\n` +
+            `${isOrderPaid ? '⚠️ Esta orden está PAGADA. Los boletos se devolverán al inventario y el cliente perderá su compra.\n\n' : 'Los boletos volverán al inventario y estarán disponibles para otros clientes.\n\n'}` +
+            `¿Confirmas que deseas LIBERAR estos boletos?`;
+        
+        if (!window.confirm(secondConfirmMessage)) return;
+        
         try {
             setIsLoadingAction(true);
             await releaseOrder(orderId);
@@ -154,7 +181,7 @@ const AdminCustomersPage: React.FC = () => {
             closeDetails();
             closeEdit();
             console.log('✅ Boletos liberados');
-            alert('✅ Boletos liberados correctamente');
+            alert('✅ Boletos liberados correctamente. Los boletos han sido devueltos al inventario.');
         } catch (e: any) {
             console.error('❌ Error al liberar orden:', e);
             alert(`❌ Error: ${e.message || 'Error al liberar la orden'}`);
