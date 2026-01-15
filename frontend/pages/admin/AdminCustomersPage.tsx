@@ -12,8 +12,8 @@ import {
     AlertTriangle,
     CheckCircle,
 } from 'lucide-react';
-import { Order } from '../../types';
-import { getOrders, updateOrder, releaseOrder, editOrder, markOrderAsPending } from '../../services/api';
+import { Order, Raffle } from '../../types';
+import { getOrders, updateOrder, releaseOrder, editOrder, markOrderAsPending, getRaffles, createOrderManual, getOccupiedTickets } from '../../services/api';
 import EditOrderForm from '../../components/admin/EditOrderForm';
 
 const AdminCustomersPage: React.FC = () => {
@@ -29,10 +29,54 @@ const AdminCustomersPage: React.FC = () => {
     const [isReleaseModalOpen, setIsReleaseModalOpen] = useState(false);
     const [orderToRelease, setOrderToRelease] = useState<Order | null>(null);
     const [releaseStep, setReleaseStep] = useState<1 | 2>(1);
+    const [isCreateOrderModalOpen, setIsCreateOrderModalOpen] = useState(false);
+    const [raffles, setRaffles] = useState<Raffle[]>([]);
+    const [selectedRaffleId, setSelectedRaffleId] = useState<string>('');
+    const [occupiedTickets, setOccupiedTickets] = useState<number[]>([]);
+    const [customerName, setCustomerName] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
+    const [customerEmail, setCustomerEmail] = useState('');
+    const [customerDistrict, setCustomerDistrict] = useState('');
+    const [manualTicketsInput, setManualTicketsInput] = useState('');
+    const [giftTicketsInput, setGiftTicketsInput] = useState('');
+    const [orderStatus, setOrderStatus] = useState<'PENDING' | 'PAID' | 'COMPLETED'>('PENDING');
+    const [paymentMethod, setPaymentMethod] = useState('');
+    const [notes, setNotes] = useState('');
+    const [validationErrors, setValidationErrors] = useState<string[]>([]);
+    const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
     useEffect(() => {
         loadData();
+        loadRaffles();
     }, []);
+
+    const loadRaffles = async () => {
+        try {
+            const data = await getRaffles();
+            setRaffles(data);
+        } catch (e) {
+            console.error('Error cargando rifas:', e);
+        }
+    };
+
+    // Cargar boletos ocupados cuando se selecciona una rifa
+    useEffect(() => {
+        if (selectedRaffleId) {
+            loadOccupiedTickets();
+        } else {
+            setOccupiedTickets([]);
+        }
+    }, [selectedRaffleId]);
+
+    const loadOccupiedTickets = async () => {
+        try {
+            const data = await getOccupiedTickets(selectedRaffleId);
+            setOccupiedTickets(data.tickets || []);
+        } catch (e) {
+            console.error('Error cargando boletos ocupados:', e);
+            setOccupiedTickets([]);
+        }
+    };
 
     const loadData = async () => {
         try {
@@ -198,6 +242,143 @@ const AdminCustomersPage: React.FC = () => {
         }
     };
 
+    // Parsear boletos desde string (separados por comas, espacios, etc.)
+    const parseTickets = (input: string): number[] => {
+        if (!input.trim()) return [];
+        return input
+            .split(/[,\s]+/)
+            .map(t => parseInt(t.trim(), 10))
+            .filter(t => !isNaN(t) && t > 0);
+    };
+
+    // Validar y crear orden manual
+    const validateAndCreateOrder = async () => {
+        const errors: string[] = [];
+
+        // Validar rifa seleccionada
+        if (!selectedRaffleId) {
+            errors.push('Debes seleccionar una rifa');
+        }
+
+        // Validar datos del cliente
+        if (!customerName.trim()) {
+            errors.push('El nombre del cliente es requerido');
+        }
+        if (!customerPhone.trim()) {
+            errors.push('El teléfono del cliente es requerido');
+        }
+
+        // Validar boletos manuales
+        const manualTickets = parseTickets(manualTicketsInput);
+        if (manualTickets.length === 0) {
+            errors.push('Debes ingresar al menos un boleto manual');
+        }
+
+        // Validar rifa y rango de boletos
+        const selectedRaffle = raffles.find(r => r.id === selectedRaffleId);
+        if (selectedRaffle) {
+            // Validar rango de boletos manuales
+            const invalidManualTickets = manualTickets.filter(t => t < 1 || t > selectedRaffle.tickets);
+            if (invalidManualTickets.length > 0) {
+                errors.push(`Boletos manuales fuera de rango (1-${selectedRaffle.tickets}): ${invalidManualTickets.join(', ')}`);
+            }
+
+            // Validar boletos ocupados
+            const occupiedManualTickets = manualTickets.filter(t => occupiedTickets.includes(t));
+            if (occupiedManualTickets.length > 0) {
+                errors.push(`Boletos manuales ya ocupados: ${occupiedManualTickets.join(', ')}`);
+            }
+
+            // Validar boletos de regalo si la rifa tiene oportunidades
+            if (selectedRaffle.boletosConOportunidades && selectedRaffle.numeroOportunidades && selectedRaffle.numeroOportunidades > 1) {
+                const giftTickets = parseTickets(giftTicketsInput);
+                if (giftTickets.length > 0) {
+                    const totalEmisiones = selectedRaffle.tickets * selectedRaffle.numeroOportunidades;
+                    const invalidGiftTickets = giftTickets.filter(t => t < selectedRaffle.tickets + 1 || t > totalEmisiones);
+                    if (invalidGiftTickets.length > 0) {
+                        errors.push(`Boletos de regalo fuera de rango (${selectedRaffle.tickets + 1}-${totalEmisiones}): ${invalidGiftTickets.join(', ')}`);
+                    }
+
+                    const occupiedGiftTickets = giftTickets.filter(t => occupiedTickets.includes(t));
+                    if (occupiedGiftTickets.length > 0) {
+                        errors.push(`Boletos de regalo ya ocupados: ${occupiedGiftTickets.join(', ')}`);
+                    }
+
+                    // Validar solapamiento
+                    const overlap = manualTickets.filter(t => giftTickets.includes(t));
+                    if (overlap.length > 0) {
+                        errors.push(`Boletos duplicados entre manuales y de regalo: ${overlap.join(', ')}`);
+                    }
+                }
+            } else if (giftTicketsInput.trim()) {
+                errors.push('Esta rifa no tiene boletos con oportunidades. No puedes asignar boletos de regalo.');
+            }
+        }
+
+        setValidationErrors(errors);
+        if (errors.length > 0) {
+            return;
+        }
+
+        // Crear la orden
+        try {
+            setIsCreatingOrder(true);
+            const selectedRaffle = raffles.find(r => r.id === selectedRaffleId)!;
+            const manualTickets = parseTickets(manualTicketsInput);
+            const giftTickets = parseTickets(giftTicketsInput);
+            
+            // Calcular total (solo boletos manuales cuentan para el precio)
+            const total = manualTickets.length * selectedRaffle.price;
+
+            const newOrder = await createOrderManual({
+                raffleId: selectedRaffleId,
+                customer: {
+                    name: customerName.trim(),
+                    phone: customerPhone.trim(),
+                    email: customerEmail.trim() || undefined,
+                    district: customerDistrict.trim() || undefined,
+                },
+                tickets: manualTickets,
+                giftTickets: giftTickets.length > 0 ? giftTickets : undefined,
+                total,
+                status: orderStatus,
+                paymentMethod: paymentMethod.trim() || undefined,
+                notes: notes.trim() || undefined,
+            });
+
+            // Limpiar formulario
+            handleCloseCreateOrderModal();
+
+            // Refrescar datos
+            await refreshData();
+            if (selectedRaffleId) {
+                await loadOccupiedTickets();
+            }
+
+            alert(`✅ Orden creada exitosamente\nFolio: ${newOrder.folio}\nBoletos: ${newOrder.tickets.length}`);
+        } catch (e: any) {
+            console.error('❌ Error creando orden:', e);
+            alert(`❌ Error: ${e.message || 'Error al crear la orden'}`);
+        } finally {
+            setIsCreatingOrder(false);
+        }
+    };
+
+    const handleCloseCreateOrderModal = () => {
+        setIsCreateOrderModalOpen(false);
+        setValidationErrors([]);
+        setSelectedRaffleId('');
+        setCustomerName('');
+        setCustomerPhone('');
+        setCustomerEmail('');
+        setCustomerDistrict('');
+        setManualTicketsInput('');
+        setGiftTicketsInput('');
+        setOrderStatus('PENDING');
+        setPaymentMethod('');
+        setNotes('');
+    };
+
     /**
      * Formatea una fecha a formato hondureño con fecha y hora
      * Formato: "DD/MM/YYYY HH:MM:SS"
@@ -262,6 +443,13 @@ const AdminCustomersPage: React.FC = () => {
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-3">
+                            <button
+                                onClick={() => setIsCreateOrderModalOpen(true)}
+                                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                            >
+                                <FileText className="w-4 h-4" />
+                                <span>Crear Orden Manual</span>
+                            </button>
                             <button
                                 onClick={refreshData}
                                 disabled={refreshing}
@@ -754,6 +942,304 @@ const AdminCustomersPage: React.FC = () => {
                                         </div>
                                     </>
                                 )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Modal de Crear Orden Manual */}
+            <AnimatePresence>
+                {isCreateOrderModalOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 overflow-y-auto"
+                        onClick={handleCloseCreateOrderModal}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: -20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
+                            className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white rounded-t-2xl sticky top-0 z-10">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-2xl font-bold">Crear Orden Manual</h2>
+                                        <p className="text-green-100 mt-1">Agrega una orden manualmente con todos los datos</p>
+                                    </div>
+                                    <button
+                                        onClick={handleCloseCreateOrderModal}
+                                        className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-200 p-2 rounded-xl"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-6 space-y-6">
+                                {/* Errores de validación */}
+                                {validationErrors.length > 0 && (
+                                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                                        <div className="flex items-start">
+                                            <AlertTriangle className="w-5 h-5 text-red-600 mr-2 mt-0.5" />
+                                            <div className="flex-1">
+                                                <p className="font-semibold text-red-800 mb-2">Errores de validación:</p>
+                                                <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
+                                                    {validationErrors.map((error, idx) => (
+                                                        <li key={idx}>{error}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Seleccionar Rifa */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Rifa <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={selectedRaffleId}
+                                        onChange={(e) => {
+                                            setSelectedRaffleId(e.target.value);
+                                            setManualTicketsInput('');
+                                            setGiftTicketsInput('');
+                                        }}
+                                        className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                                        required
+                                    >
+                                        <option value="">Selecciona una rifa</option>
+                                        {raffles.map(raffle => (
+                                            <option key={raffle.id} value={raffle.id}>
+                                                {raffle.title} (${raffle.price} MXN - {raffle.tickets} boletos)
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Información de la rifa seleccionada */}
+                                {selectedRaffleId && (() => {
+                                    const selectedRaffle = raffles.find(r => r.id === selectedRaffleId);
+                                    if (!selectedRaffle) return null;
+                                    return (
+                                        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                                            <p className="text-sm text-blue-800">
+                                                <strong>Rango de boletos:</strong> 1 - {selectedRaffle.tickets}
+                                                {selectedRaffle.boletosConOportunidades && selectedRaffle.numeroOportunidades && selectedRaffle.numeroOportunidades > 1 && (
+                                                    <span className="ml-2">
+                                                        | <strong>Boletos de regalo:</strong> {selectedRaffle.tickets + 1} - {selectedRaffle.tickets * selectedRaffle.numeroOportunidades}
+                                                    </span>
+                                                )}
+                                            </p>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* Datos del Cliente */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Nombre del Cliente <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={customerName}
+                                            onChange={(e) => setCustomerName(e.target.value)}
+                                            className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                                            placeholder="Nombre completo"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Teléfono <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={customerPhone}
+                                            onChange={(e) => setCustomerPhone(e.target.value)}
+                                            className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                                            placeholder="1234567890"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Email (Opcional)
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={customerEmail}
+                                            onChange={(e) => setCustomerEmail(e.target.value)}
+                                            className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                                            placeholder="cliente@ejemplo.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Distrito (Opcional)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={customerDistrict}
+                                            onChange={(e) => setCustomerDistrict(e.target.value)}
+                                            className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                                            placeholder="Distrito o ciudad"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Boletos Manuales */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Boletos Manuales <span className="text-red-500">*</span>
+                                        <span className="text-xs text-gray-500 ml-2">(Separados por comas o espacios, ej: 1, 2, 3 o 1 2 3)</span>
+                                    </label>
+                                    <textarea
+                                        value={manualTicketsInput}
+                                        onChange={(e) => setManualTicketsInput(e.target.value)}
+                                        className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none"
+                                        rows={3}
+                                        placeholder="1, 2, 3, 4, 5"
+                                        required
+                                    />
+                                    {manualTicketsInput && (
+                                        <p className="text-xs text-gray-600 mt-1">
+                                            Boletos ingresados: {parseTickets(manualTicketsInput).join(', ') || 'Ninguno válido'}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Boletos de Regalo (solo si la rifa tiene oportunidades) */}
+                                {selectedRaffleId && (() => {
+                                    const selectedRaffle = raffles.find(r => r.id === selectedRaffleId);
+                                    if (!selectedRaffle || !selectedRaffle.boletosConOportunidades || !selectedRaffle.numeroOportunidades || selectedRaffle.numeroOportunidades <= 1) {
+                                        return null;
+                                    }
+                                    return (
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                Boletos de Regalo (Opcional)
+                                                <span className="text-xs text-gray-500 ml-2">(Rango: {selectedRaffle.tickets + 1} - {selectedRaffle.tickets * selectedRaffle.numeroOportunidades})</span>
+                                            </label>
+                                            <textarea
+                                                value={giftTicketsInput}
+                                                onChange={(e) => setGiftTicketsInput(e.target.value)}
+                                                className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none"
+                                                rows={3}
+                                                placeholder={`${selectedRaffle.tickets + 1}, ${selectedRaffle.tickets + 2}, ${selectedRaffle.tickets + 3}`}
+                                            />
+                                            {giftTicketsInput && (
+                                                <p className="text-xs text-gray-600 mt-1">
+                                                    Boletos de regalo ingresados: {parseTickets(giftTicketsInput).join(', ') || 'Ninguno válido'}
+                                                </p>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* Estado y Método de Pago */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Estado Inicial
+                                        </label>
+                                        <select
+                                            value={orderStatus}
+                                            onChange={(e) => setOrderStatus(e.target.value as 'PENDING' | 'PAID' | 'COMPLETED')}
+                                            className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                                        >
+                                            <option value="PENDING">Pendiente</option>
+                                            <option value="PAID">Pagado</option>
+                                            <option value="COMPLETED">Completado</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Método de Pago (Opcional)
+                                        </label>
+                                        <select
+                                            value={paymentMethod}
+                                            onChange={(e) => setPaymentMethod(e.target.value)}
+                                            className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                                        >
+                                            <option value="">Selecciona método</option>
+                                            <option value="Transferencia">Transferencia</option>
+                                            <option value="Depósito en Efectivo">Depósito en Efectivo</option>
+                                            <option value="Punto de Venta">Punto de Venta</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Notas */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Notas (Opcional)
+                                    </label>
+                                    <textarea
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        className="w-full p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none"
+                                        rows={3}
+                                        placeholder="Notas adicionales sobre esta orden..."
+                                    />
+                                </div>
+
+                                {/* Resumen */}
+                                {selectedRaffleId && manualTicketsInput && (() => {
+                                    const selectedRaffle = raffles.find(r => r.id === selectedRaffleId);
+                                    if (!selectedRaffle) return null;
+                                    const manualTickets = parseTickets(manualTicketsInput);
+                                    const total = manualTickets.length * selectedRaffle.price;
+                                    return (
+                                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                            <h3 className="font-semibold text-gray-900 mb-2">Resumen de la Orden</h3>
+                                            <div className="space-y-1 text-sm text-gray-700">
+                                                <p>Boletos manuales: {manualTickets.length}</p>
+                                                {parseTickets(giftTicketsInput).length > 0 && (
+                                                    <p>Boletos de regalo: {parseTickets(giftTicketsInput).length}</p>
+                                                )}
+                                                <p className="font-bold text-lg text-green-600">Total: ${total.toFixed(2)} MXN</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* Botones */}
+                                <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                                    <button
+                                        type="button"
+                                        onClick={handleCloseCreateOrderModal}
+                                        className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-medium"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={validateAndCreateOrder}
+                                        disabled={isCreatingOrder}
+                                        className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all font-semibold flex items-center space-x-2 disabled:opacity-50"
+                                    >
+                                        {isCreatingOrder ? (
+                                            <>
+                                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                                <span>Creando...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle className="w-4 h-4" />
+                                                <span>Crear Orden</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </motion.div>

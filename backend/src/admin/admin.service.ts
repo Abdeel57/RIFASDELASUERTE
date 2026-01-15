@@ -10,6 +10,7 @@ import { CreateRaffleDto, UpdateRaffleDto } from './dto/create-raffle.dto';
 import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
 import { CreateWinnerDto } from './dto/create-winner.dto';
 import { EditOrderDto } from './dto/update-order.dto';
+import { CreateOrderManualDto } from './dto/create-order-manual.dto';
 
 @Injectable()
 export class AdminService {
@@ -571,6 +572,192 @@ export class AdminService {
     } catch (error) {
       this.logger.error('Error deleting order:', error);
       throw error;
+    }
+  }
+
+  async createOrderManual(createOrderDto: CreateOrderManualDto) {
+    try {
+      this.logger.log('📝 Creando orden manual con datos:', createOrderDto);
+
+      // Asegurar que las tablas existen
+      await this.dbSetup.ensureOrdersTable();
+      await this.dbSetup.ensureUsersTable();
+      await this.dbSetup.ensureRafflesTable();
+
+      // 1. Verificar que la rifa existe
+      const raffle = await this.prisma.raffle.findUnique({ 
+        where: { id: createOrderDto.raffleId } 
+      });
+      if (!raffle) {
+        throw new NotFoundException('Rifa no encontrada');
+      }
+
+      // 2. Validar rango de boletos manuales
+      const maxTicket = raffle.tickets;
+      const invalidTickets = createOrderDto.tickets.filter(t => t < 1 || t > maxTicket);
+      if (invalidTickets.length > 0) {
+        throw new BadRequestException(
+          `Boletos fuera de rango (1-${maxTicket}): ${invalidTickets.join(', ')}`
+        );
+      }
+
+      // 3. Validar rango de boletos de regalo si se proporcionan
+      let giftTickets = createOrderDto.giftTickets || [];
+      if (raffle.boletosConOportunidades && raffle.numeroOportunidades > 1) {
+        const totalEmisiones = raffle.tickets * raffle.numeroOportunidades;
+        const maxGiftTicket = totalEmisiones;
+        const invalidGiftTickets = giftTickets.filter(t => t < raffle.tickets + 1 || t > maxGiftTicket);
+        if (invalidGiftTickets.length > 0) {
+          throw new BadRequestException(
+            `Boletos de regalo fuera de rango (${raffle.tickets + 1}-${maxGiftTicket}): ${invalidGiftTickets.join(', ')}`
+          );
+        }
+      } else if (giftTickets.length > 0) {
+        // Si la rifa no tiene oportunidades pero se proporcionaron boletos de regalo
+        throw new BadRequestException('Esta rifa no tiene boletos con oportunidades. No se pueden asignar boletos de regalo.');
+      }
+
+      // 4. Obtener boletos ocupados
+      const existingOrders = await this.prisma.order.findMany({
+        where: {
+          raffleId: createOrderDto.raffleId,
+          status: { not: 'CANCELLED' }
+        },
+        select: { tickets: true }
+      });
+
+      const occupiedSet = new Set<number>();
+      existingOrders.forEach(order => {
+        order.tickets.forEach(ticket => occupiedSet.add(ticket));
+      });
+
+      // 5. Validar que los boletos manuales no estén ocupados
+      const occupiedManualTickets = createOrderDto.tickets.filter(t => occupiedSet.has(t));
+      if (occupiedManualTickets.length > 0) {
+        throw new BadRequestException(
+          `Los siguientes boletos ya están ocupados: ${occupiedManualTickets.join(', ')}`
+        );
+      }
+
+      // 6. Validar que los boletos de regalo no estén ocupados
+      const occupiedGiftTickets = giftTickets.filter(t => occupiedSet.has(t));
+      if (occupiedGiftTickets.length > 0) {
+        throw new BadRequestException(
+          `Los siguientes boletos de regalo ya están ocupados: ${occupiedGiftTickets.join(', ')}`
+        );
+      }
+
+      // 7. Validar que no haya duplicados en los boletos manuales
+      const manualTicketsSet = new Set(createOrderDto.tickets);
+      if (manualTicketsSet.size !== createOrderDto.tickets.length) {
+        throw new BadRequestException('Hay boletos duplicados en la selección manual');
+      }
+
+      // 8. Validar que no haya duplicados en los boletos de regalo
+      if (giftTickets.length > 0) {
+        const giftTicketsSet = new Set(giftTickets);
+        if (giftTicketsSet.size !== giftTickets.length) {
+          throw new BadRequestException('Hay boletos de regalo duplicados');
+        }
+      }
+
+      // 9. Validar que no haya solapamiento entre boletos manuales y de regalo
+      const overlap = createOrderDto.tickets.filter(t => giftTickets.includes(t));
+      if (overlap.length > 0) {
+        throw new BadRequestException(
+          `Los siguientes boletos están tanto en selección manual como en regalo: ${overlap.join(', ')}`
+        );
+      }
+
+      // 10. Crear o buscar el usuario
+      let user;
+      if (createOrderDto.customer.email) {
+        user = await this.prisma.user.findUnique({ 
+          where: { email: createOrderDto.customer.email } 
+        });
+      }
+
+      if (!user) {
+        // Crear nuevo usuario
+        const email = createOrderDto.customer.email || `user-${Date.now()}@temp.com`;
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            name: createOrderDto.customer.name,
+            phone: createOrderDto.customer.phone,
+            district: createOrderDto.customer.district,
+          },
+        });
+        this.logger.log('✅ Usuario creado:', user.id);
+      } else {
+        // Actualizar datos del usuario existente si es necesario
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            name: createOrderDto.customer.name || user.name,
+            phone: createOrderDto.customer.phone || user.phone,
+            district: createOrderDto.customer.district || user.district,
+          },
+        });
+        this.logger.log('✅ Usuario existente actualizado:', user.id);
+      }
+
+      // 11. Combinar todos los boletos (manuales + de regalo)
+      const allTickets = [...createOrderDto.tickets, ...giftTickets];
+
+      // 12. Crear la orden
+      const folio = `ADM-${Math.random().toString(36).substring(2, 7).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+      const newOrder = await this.prisma.order.create({
+        data: {
+          folio,
+          raffleId: createOrderDto.raffleId,
+          userId: user.id,
+          tickets: allTickets,
+          total: createOrderDto.total,
+          status: (createOrderDto.status || 'PENDING') as any,
+          paymentMethod: createOrderDto.paymentMethod,
+          notes: createOrderDto.notes,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
+        },
+        include: {
+          raffle: true,
+          user: true,
+        },
+      });
+
+      this.logger.log('✅ Orden creada:', newOrder.folio);
+
+      // 13. Actualizar contador de boletos vendidos (solo si está pagada o completada)
+      if (createOrderDto.status === 'PAID' || createOrderDto.status === 'COMPLETED') {
+        await this.prisma.raffle.update({
+          where: { id: createOrderDto.raffleId },
+          data: { sold: { increment: createOrderDto.tickets.length } },
+        });
+        this.logger.log('✅ Contador de boletos vendidos actualizado');
+      }
+
+      // 14. Retornar con formato correcto
+      return {
+        ...newOrder,
+        customer: {
+          id: newOrder.user.id,
+          name: newOrder.user.name || 'Sin nombre',
+          phone: newOrder.user.phone || 'Sin teléfono',
+          email: newOrder.user.email || '',
+          district: newOrder.user.district || 'Sin distrito',
+        },
+        raffleTitle: newOrder.raffle.title,
+        total: newOrder.total,
+      };
+    } catch (error: any) {
+      this.logger.error('❌ Error creando orden manual:', error);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new HttpException(
+        error.message || 'Error al crear la orden manual',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 

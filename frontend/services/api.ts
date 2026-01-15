@@ -1301,6 +1301,58 @@ export const releaseOrder = async (id: string): Promise<Order> => {
     }
 };
 
+export interface CreateOrderManualData {
+    raffleId: string;
+    customer: {
+        name: string;
+        phone: string;
+        email?: string;
+        district?: string;
+    };
+    tickets: number[];
+    giftTickets?: number[];
+    total: number;
+    status?: 'PENDING' | 'PAID' | 'COMPLETED';
+    paymentMethod?: string;
+    notes?: string;
+}
+
+export const createOrderManual = async (orderData: CreateOrderManualData): Promise<Order> => {
+    try {
+        console.log('🚀 Creando orden manual...', orderData);
+        const response = await fetch(`${API_URL}/admin/orders/manual`, {
+            method: 'POST',
+            headers: {
+                ...getAuthHeaders(),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderData),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorMessage = `Error ${response.status}: ${errorText}`;
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch {
+                // Si no se puede parsear, usar el texto original
+            }
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        console.log('✅ Orden manual creada exitosamente');
+        return parseOrderDates(data);
+    } catch (error) {
+        console.error('❌ Error creando orden manual:', error);
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('Error desconocido al crear la orden manual');
+    }
+};
+
 // Funciones de clientes
 export const getCustomers = async (): Promise<any[]> => {
     try {

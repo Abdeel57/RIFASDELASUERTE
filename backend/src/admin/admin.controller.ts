@@ -8,6 +8,7 @@ import { CreateRaffleDto, UpdateRaffleDto } from './dto/create-raffle.dto';
 import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
 import { CreateWinnerDto } from './dto/create-winner.dto';
 import { EditOrderDto, MarkOrderPaidDto } from './dto/update-order.dto';
+import { CreateOrderManualDto } from './dto/create-order-manual.dto';
 // FIX: Using `import type` for types/namespaces and value import for the enum to fix module resolution.
 import { type Raffle, type Winner, type Prisma } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -142,6 +143,20 @@ export class AdminController {
     } catch (error) {
       console.error('Error deleting order:', error);
       throw new HttpException('Error al eliminar la orden', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Roles('admin', 'superadmin')
+  @Post('orders/manual')
+  async createOrderManual(@Body() createOrderDto: CreateOrderManualDto) {
+    try {
+      return await this.adminService.createOrderManual(createOrderDto);
+    } catch (error: any) {
+      console.error('Error creating manual order:', error);
+      throw new HttpException(
+        error.message || 'Error al crear la orden manual',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 
