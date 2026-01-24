@@ -36,7 +36,7 @@ export class MetaController {
   }> {
     // Configuración del pixel (en producción esto vendría de variables de entorno)
     return {
-      pixelId: process.env.META_PIXEL_ID || '1234567890123456',
+      pixelId: process.env.META_PIXEL_ID || '1869257907042876',
       events: ['PageView', 'ViewContent', 'AddToCart', 'InitiateCheckout', 'Purchase', 'Lead'],
       isActive: true,
       lastEvent: new Date(),
