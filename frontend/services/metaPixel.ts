@@ -22,6 +22,15 @@ class MetaPixelService {
   }
 
   private async loadPixelConfig() {
+    // Verificar si el pixel ya está inicializado desde el HTML
+    if (typeof window !== 'undefined' && window.fbq) {
+      this.isInitialized = true;
+      // Obtener el pixelId del pixel ya inicializado
+      // El pixel ya está en el HTML con ID: 1869257907042876
+      this.pixelId = '1869257907042876';
+      return;
+    }
+
     try {
       const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
       const response = await fetch(`${API_URL}/admin/meta/pixel-config`);
@@ -30,13 +39,21 @@ class MetaPixelService {
       this.initializePixel();
     } catch (error) {
       // Error logging removed for production
-      // Usar ID por defecto si falla
-      this.pixelId = '1234567890123456';
+      // Usar ID correcto por defecto si falla
+      this.pixelId = '1869257907042876';
       this.initializePixel();
     }
   }
 
   private initializePixel() {
+    // Si el pixel ya está inicializado desde el HTML, no inicializar de nuevo
+    if (typeof window !== 'undefined' && window.fbq) {
+      this.isInitialized = true;
+      this.pixelId = '1869257907042876';
+      this.processEventQueue();
+      return;
+    }
+
     if (!this.pixelId || this.isInitialized) return;
 
     // Create script element

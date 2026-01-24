@@ -35,6 +35,7 @@ export class MetaController {
     lastEvent: Date;
   }> {
     // Configuración del pixel (en producción esto vendría de variables de entorno)
+    // Este endpoint es público para que el frontend pueda cargar el pixel sin autenticación
     return {
       pixelId: process.env.META_PIXEL_ID || '1869257907042876',
       events: ['PageView', 'ViewContent', 'AddToCart', 'InitiateCheckout', 'Purchase', 'Lead'],
