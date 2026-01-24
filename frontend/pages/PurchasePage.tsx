@@ -330,6 +330,7 @@ ${ticketsInfo}
             }
             
             // Track InitiateCheckout event - cuando se hace click en "Apartar"
+            console.log('🛒 Disparando evento InitiateCheckout para Meta Pixel');
             metaPixelService.trackInitiateCheckout(raffle.id, ticketsToOrder, total);
 
             // Primero crear o buscar el usuario

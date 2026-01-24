@@ -105,6 +105,7 @@ const RaffleDetailPage = () => {
             setTimeout(() => {
                 const pricePerTicket = raffle.price || raffle.packs?.find(p => p.tickets === 1 || p.q === 1)?.price || 50;
                 const totalValue = newSelectedTickets.length * pricePerTicket;
+                console.log('🛒 Disparando evento AddToCart para Meta Pixel');
                 metaPixelService.trackAddToCart(raffle.id, newSelectedTickets, totalValue);
             }, 0);
         }
@@ -244,6 +245,7 @@ const RaffleDetailPage = () => {
         // Track AddToCart for random selection
         const pricePerTicket = raffle.price || raffle.packs?.find(p => p.tickets === 1 || p.q === 1)?.price || 50;
         const totalValue = selected.length * pricePerTicket;
+        console.log('🛒 Disparando evento AddToCart (aleatorio) para Meta Pixel');
         metaPixelService.trackAddToCart(raffle.id, selected, totalValue);
 
     }, [raffle, occupiedTickets]);

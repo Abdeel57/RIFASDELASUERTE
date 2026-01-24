@@ -48,13 +48,17 @@ class MetaPixelService {
   private initializePixel() {
     // Si el pixel ya está inicializado desde el HTML, no inicializar de nuevo
     if (typeof window !== 'undefined' && window.fbq) {
+      console.log('✅ Meta Pixel ya inicializado desde HTML');
       this.isInitialized = true;
       this.pixelId = '1869257907042876';
       this.processEventQueue();
       return;
     }
 
-    if (!this.pixelId || this.isInitialized) return;
+    if (!this.pixelId || this.isInitialized) {
+      console.warn('⚠️ Meta Pixel no se puede inicializar:', { pixelId: this.pixelId, isInitialized: this.isInitialized });
+      return;
+    }
 
     // Create script element
     const script = document.createElement('script');
@@ -104,19 +108,19 @@ class MetaPixelService {
 
   private trackEventDirect(event: PixelEvent) {
     if (!window.fbq || !this.isInitialized) {
-      console.warn('Meta Pixel not initialized, queuing event:', event);
+      console.warn('⚠️ Meta Pixel not initialized, queuing event:', event);
       this.eventQueue.push(event);
       return;
     }
 
     try {
+      console.log(`📊 Meta Pixel Event: ${event.eventName}`, event.eventData);
       window.fbq('track', event.eventName, event.eventData);
-      // Removed console.log for production performance
       
       // Also send to backend for analytics (DESACTIVADO)
       this.sendToBackend(event);
     } catch (error) {
-      // Error logging removed for production
+      console.error('❌ Error tracking Meta Pixel event:', error, event);
     }
   }
 
