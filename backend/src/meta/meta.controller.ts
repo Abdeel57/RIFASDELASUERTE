@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { MetaService, CustomAudience, CampaignMetrics, PixelEvent } from './meta.service';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('admin/meta')
 export class MetaController {
@@ -27,6 +28,7 @@ export class MetaController {
     return this.metaService.createLookalikeAudience(body.baseAudienceId, body.similarity);
   }
 
+  @Public()
   @Get('pixel-config')
   async getPixelConfig(): Promise<{
     pixelId: string;
