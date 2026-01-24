@@ -100,13 +100,17 @@
     fbq('track', 'PageView');
     console.log('✅ Meta Pixel inicializado con ID: 1869257907042876');
   </script>
-  <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=1869257907042876&ev=PageView&noscript=1"
-  /></noscript>
   <!-- End Meta Pixel Code -->
 </head>
 
 <body class="bg-background-primary">
+  <!-- Meta Pixel noscript fallback -->
+  <noscript>
+    <img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=1869257907042876&ev=PageView&noscript=1"
+      alt=""
+    />
+  </noscript>
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
