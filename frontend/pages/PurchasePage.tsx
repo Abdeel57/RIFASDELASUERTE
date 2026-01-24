@@ -180,8 +180,10 @@ ${ticketsInfo}
                 setContactWhatsapp(settingsData.contactInfo?.whatsapp || '521234567890');
                 
                 // Cargar boletos ocupados para poder asignar los disponibles
+                // IMPORTANTE: Cargar TODOS los boletos ocupados sin límite
                 if (raffleData?.id) {
-                    getOccupiedTickets(raffleData.id).then(occupiedResponse => {
+                    getOccupiedTickets(raffleData.id, { limit: undefined }).then(occupiedResponse => {
+                        console.log('📊 Boletos ocupados cargados:', occupiedResponse.tickets.length, 'de', occupiedResponse.total);
                         setOccupiedTickets(occupiedResponse.tickets || []);
                     }).catch(err => {
                         console.error('❌ Error loading occupied tickets:', err);

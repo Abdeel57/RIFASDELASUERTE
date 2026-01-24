@@ -47,6 +47,18 @@ export class PublicController {
     });
   }
 
+  @Get('raffles/:id/tickets/:ticketNumber/status')
+  checkTicketStatus(
+    @Param('id') id: string,
+    @Param('ticketNumber') ticketNumber: string,
+  ) {
+    const ticketNum = Number(ticketNumber);
+    if (isNaN(ticketNum) || ticketNum < 1) {
+      throw new HttpException('Número de boleto inválido', HttpStatus.BAD_REQUEST);
+    }
+    return this.publicService.checkTicketStatus(id, ticketNum);
+  }
+
   @Get('winners')
   getPastWinners() {
     return this.publicService.getPastWinners();

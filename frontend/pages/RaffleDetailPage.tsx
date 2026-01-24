@@ -62,7 +62,9 @@ const RaffleDetailPage = () => {
                     // Track ViewContent event
                     metaPixelService.trackViewContent(raffleData.id, raffleData);
 
-                    getOccupiedTickets(raffleData.id).then(occupiedData => {
+                    // Cargar TODOS los boletos ocupados sin límite
+                    getOccupiedTickets(raffleData.id, { limit: undefined }).then(occupiedData => {
+                        console.log('📊 Boletos ocupados cargados:', occupiedData.tickets.length, 'de', occupiedData.total);
                         setOccupiedTickets(occupiedData.tickets || []);
                         setLoading(false);
                     });

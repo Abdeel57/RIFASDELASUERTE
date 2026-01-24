@@ -208,19 +208,37 @@ export class PublicService {
     const limit = typeof rawLimit === 'number' && rawLimit > 0 ? Math.min(rawLimit, 2000) : undefined;
     const sortDirection = options?.sortDirection === 'desc' ? 'desc' : 'asc';
 
+    // Obtener todas las órdenes activas (PAID y PENDING)
+    // IMPORTANTE: Excluir CANCELLED y EXPIRED para que esos boletos estén disponibles
     const orders = await this.prisma.order.findMany({
       where: {
         raffleId,
         status: { in: ['PAID', 'PENDING'] },
       },
-      select: { tickets: true },
+      select: { 
+        tickets: true,
+        status: true,
+        id: true,
+      },
     });
 
-    const allTickets = orders.flatMap(o => o.tickets).filter((ticket): ticket is number => typeof ticket === 'number');
+    // Extraer todos los boletos de las órdenes activas
+    const allTickets = orders.flatMap(o => {
+      // Asegurar que tickets es un array de números
+      if (Array.isArray(o.tickets)) {
+        return o.tickets.filter((ticket): ticket is number => 
+          typeof ticket === 'number' && !isNaN(ticket) && ticket > 0
+        );
+      }
+      return [];
+    });
+
+    // Eliminar duplicados (por si acaso hay algún problema de datos)
+    const uniqueTickets = Array.from(new Set(allTickets));
 
     const sortedTickets = sortDirection === 'desc'
-      ? [...allTickets].sort((a, b) => b - a)
-      : [...allTickets].sort((a, b) => a - b);
+      ? [...uniqueTickets].sort((a, b) => b - a)
+      : [...uniqueTickets].sort((a, b) => a - b);
 
     const total = sortedTickets.length;
 
@@ -244,6 +262,63 @@ export class PublicService {
       hasMore: end < total,
       nextOffset,
     };
+  }
+
+  // Método de diagnóstico para verificar el estado de un boleto específico
+  async checkTicketStatus(raffleId: string, ticketNumber: number) {
+    await this.ensureOrdersTable();
+    
+    const orders = await this.prisma.order.findMany({
+      where: {
+        raffleId,
+      },
+      select: {
+        id: true,
+        folio: true,
+        status: true,
+        tickets: true,
+        createdAt: true,
+        user: {
+          select: {
+            name: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    const ticketInfo = {
+      ticketNumber,
+      raffleId,
+      isOccupied: false,
+      isAvailable: false,
+      orders: [] as Array<{
+        orderId: string;
+        folio: string;
+        status: string;
+        createdAt: Date;
+        customer?: { name: string | null; phone: string | null };
+      }>,
+    };
+
+    orders.forEach(order => {
+      if (Array.isArray(order.tickets) && order.tickets.includes(ticketNumber)) {
+        ticketInfo.isOccupied = true;
+        ticketInfo.orders.push({
+          orderId: order.id,
+          folio: order.folio,
+          status: order.status,
+          createdAt: order.createdAt,
+          customer: order.user || undefined,
+        });
+      }
+    });
+
+    // Determinar si está disponible (no está en órdenes activas)
+    const activeOrders = ticketInfo.orders.filter(o => o.status === 'PAID' || o.status === 'PENDING');
+    ticketInfo.isAvailable = activeOrders.length === 0;
+
+    return ticketInfo;
   }
 
   async getPastWinners() {
