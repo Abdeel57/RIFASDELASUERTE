@@ -329,7 +329,7 @@ ${ticketsInfo}
                 orderNotes = `Compra de ${initialTickets.length} boleto(s) para ${raffle.title}`;
             }
             
-            // Track InitiateCheckout event
+            // Track InitiateCheckout event - cuando se hace click en "Apartar"
             metaPixelService.trackInitiateCheckout(raffle.id, ticketsToOrder, total);
 
             // Primero crear o buscar el usuario
@@ -356,9 +356,6 @@ ${ticketsInfo}
             console.log('🛒 Creating order with data:', orderData);
             const newOrder = await createOrder(orderData);
             console.log('✅ Order created successfully:', newOrder);
-            
-            // Track Purchase event
-            metaPixelService.trackPurchase(newOrder.id, raffle.id, ticketsToOrder, total);
             
             // Guardar datos del cliente para el mensaje de WhatsApp
             setCustomerData({

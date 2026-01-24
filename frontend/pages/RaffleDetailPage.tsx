@@ -59,9 +59,6 @@ const RaffleDetailPage = () => {
             getRaffleBySlug(slug).then(raffleData => {
                 setRaffle(raffleData || null);
                 if (raffleData) {
-                    // Track ViewContent event
-                    metaPixelService.trackViewContent(raffleData.id, raffleData);
-
                     // Cargar TODOS los boletos ocupados sin límite
                     getOccupiedTickets(raffleData.id, { limit: undefined }).then(occupiedData => {
                         console.log('📊 Boletos ocupados cargados:', occupiedData.tickets.length, 'de', occupiedData.total);
