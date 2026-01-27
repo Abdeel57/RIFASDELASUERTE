@@ -26,8 +26,8 @@ class MetaPixelService {
     if (typeof window !== 'undefined' && window.fbq) {
       this.isInitialized = true;
       // Obtener el pixelId del pixel ya inicializado
-      // El pixel ya está en el HTML con ID: 1869257907042876
-      this.pixelId = '1869257907042876';
+      // El pixel ya está en el HTML con ID: 939571728774749
+      this.pixelId = '939571728774749';
       return;
     }
 
@@ -40,7 +40,7 @@ class MetaPixelService {
     } catch (error) {
       // Error logging removed for production
       // Usar ID correcto por defecto si falla
-      this.pixelId = '1869257907042876';
+      this.pixelId = '939571728774749';
       this.initializePixel();
     }
   }
@@ -50,7 +50,7 @@ class MetaPixelService {
     if (typeof window !== 'undefined' && window.fbq) {
       console.log('✅ Meta Pixel ya inicializado desde HTML');
       this.isInitialized = true;
-      this.pixelId = '1869257907042876';
+      this.pixelId = '939571728774749';
       this.processEventQueue();
       return;
     }

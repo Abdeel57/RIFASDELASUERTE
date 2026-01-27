@@ -7,7 +7,7 @@
 1. Abre tu página web en el navegador
 2. Abre las **Herramientas de Desarrollador** (F12)
 3. Ve a la pestaña **Console**
-4. Deberías ver este mensaje: `✅ Meta Pixel inicializado con ID: 1869257907042876`
+4. Deberías ver este mensaje: `✅ Meta Pixel inicializado con ID: 939571728774749`
 
 ### 2. Verificar que los Eventos se Disparan
 
@@ -31,7 +31,7 @@
 3. Deberías ver peticiones a: `https://www.facebook.com/tr/`
 4. Haz click en una petición y verifica:
    - **Status**: Debe ser `200 OK`
-   - **Request URL**: Debe contener tu Pixel ID `1869257907042876`
+   - **Request URL**: Debe contener tu Pixel ID `939571728774749`
 
 ### 4. Verificar con Facebook Pixel Helper
 
@@ -45,7 +45,7 @@
 ### 5. Verificar en Facebook Events Manager
 
 1. Ve a [Facebook Events Manager](https://business.facebook.com/events_manager2)
-2. Selecciona tu Pixel: `1869257907042876`
+2. Selecciona tu Pixel: `939571728774749`
 3. Ve a la pestaña **Test Events**
 4. Visita tu página y realiza acciones
 5. Deberías ver los eventos aparecer en tiempo real
@@ -90,7 +90,7 @@ Abre la consola del navegador y ejecuta:
 console.log('fbq existe:', typeof window.fbq !== 'undefined');
 
 // Verificar el ID del pixel
-console.log('Pixel ID:', window.fbq ? '1869257907042876' : 'No inicializado');
+console.log('Pixel ID:', window.fbq ? '939571728774749' : 'No inicializado');
 
 // Disparar un evento de prueba manualmente
 if (window.fbq) {
@@ -105,4 +105,5 @@ Si después de seguir estos pasos aún no ves los eventos, verifica:
 1. Que el dominio esté correctamente configurado en Facebook
 2. Que no haya bloqueadores de anuncios
 3. Que el código se haya desplegado correctamente
+
 
