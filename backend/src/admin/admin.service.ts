@@ -729,8 +729,8 @@ export class AdminService {
 
       this.logger.log('✅ Orden creada:', newOrder.folio);
 
-      // 13. Actualizar contador de boletos vendidos (solo si está pagada o completada)
-      if (createOrderDto.status === 'PAID' || createOrderDto.status === 'COMPLETED') {
+      // 13. Actualizar contador de boletos vendidos (solo si está pagada)
+      if (createOrderDto.status === 'PAID') {
         await this.prisma.raffle.update({
           where: { id: createOrderDto.raffleId },
           data: { sold: { increment: createOrderDto.tickets.length } },
