@@ -33,30 +33,42 @@
 
 ## ⚙️ PASO 2: Configurar el Servicio
 
-### 2.1 Configurar Root Directory
-1. En el dashboard de Railway, verás tu servicio recién creado
-2. Click en el servicio (o en **"Settings"**)
-3. Ve a la pestaña **"Settings"**
-4. Busca la sección **"Root Directory"**
-5. Cambia de `/` a: **`backend`**
-6. Click en **"Save"**
+### 2.1 Verificar Build Command (IMPORTANTE)
 
-**⚠️ IMPORTANTE**: Sin esto, Railway buscará archivos en la raíz y fallará.
+**✅ BUENA NOTICIA**: Tu archivo `railway.json` ya está configurado correctamente con `cd backend`, así que Railway debería funcionar automáticamente.
 
-### 2.2 Verificar Build Command
-Railway debería detectar automáticamente, pero verifica:
+**Pero verifica que los comandos estén correctos:**
 
-1. En **Settings** → **"Build & Deploy"**
-2. El **Build Command** debería ser:
+1. En tu servicio de Railway, ve a **"Settings"**
+2. Busca **"Build & Deploy"** o **"Deploy"** o **"Configuration"**
+3. Verifica que el **Build Command** sea:
    ```
    cd backend && npm install && npx prisma generate && npx nest build
    ```
-   (O Railway usará el `railway.json` automáticamente)
+   (Railway debería leerlo automáticamente del `railway.json`)
 
-3. El **Start Command** debería ser:
+4. Verifica que el **Start Command** sea:
    ```
    cd backend && npm run start:prod
    ```
+
+**Si no ves estos comandos o están vacíos:**
+- Railway debería usar automáticamente el `railway.json` que ya tienes
+- Si no, cópialos manualmente en los campos
+
+### 2.2 Root Directory (OPCIONAL - No es necesario)
+
+**⚠️ NOTA**: Si no encuentras "Root Directory" en Settings, **NO TE PREOCUPES**.
+
+Tu `railway.json` ya tiene `cd backend` en los comandos, así que funcionará sin Root Directory.
+
+**Si lo encuentras** (puede estar en diferentes lugares):
+- Busca en **Settings** → **"Service Settings"** o **"Configuration"**
+- O en **Settings** → **"Build & Deploy"** → **"Advanced"**
+- Cambia de `/` a: **`backend`**
+- Click en **"Save"**
+
+**Pero si no lo encuentras, está bien** - los comandos con `cd backend` son suficientes.
 
 ---
 

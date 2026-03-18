@@ -259,7 +259,7 @@ export class AdminController {
     }
   }
 
-  @Roles('admin', 'superadmin')
+  @Roles('ventas', 'admin', 'superadmin')
   @Get('raffles/:id/boletos/apartados/descargar')
   async downloadApartadosTickets(
     @Param('id') raffleId: string,
@@ -292,7 +292,7 @@ export class AdminController {
     }
   }
 
-  @Roles('admin', 'superadmin')
+  @Roles('ventas', 'admin', 'superadmin')
   @Get('raffles/:id/boletos/pagados/descargar')
   async downloadPagadosTickets(
     @Param('id') raffleId: string,

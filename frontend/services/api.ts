@@ -551,6 +551,7 @@ export const downloadTickets = async (raffleId: string, tipo: 'apartados' | 'pag
 
         const response = await fetch(`${API_URL}/admin/raffles/${raffleId}/boletos/${tipo}/descargar?formato=${formato}`, {
             method: 'GET',
+            headers: getAuthHeaders(),
         });
 
         if (response.ok) {
